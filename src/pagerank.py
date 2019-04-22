@@ -5,6 +5,7 @@ import pickle as p
 from collections import OrderedDict
 import operator
 import scipy.sparse
+from collections import defaultdict
 
 
 def add_edges_between_contexts(contexts_sim, G, N):
@@ -13,28 +14,59 @@ def add_edges_between_contexts(contexts_sim, G, N):
         for j in range(N):
             if i == j:
                 continue
-            if contexts_sim[i][j] > 0.8:
+            if contexts_sim[i][j] > 0.9:
                 wt = contexts_sim[i][j]
                 #print('%d, %d, %.4f' % (i, j, wt))
                 G.add_edge(i, j, weight=wt)
                 G.add_edge(j, i, weight=wt)
 
 
-def add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start, end):
-    # Adding edges between question nodes
-    for i in range(M):
-        for j in range(end-start):
+def add_unique_question_nodes(questions_sim, question_node_map, G, N, start, end):
+    M = len(questions_sim)
+    for j in range(end - start):
+        create_new_node = True
+        max_sim = 0.95
+        max_sim_i = -1
+        for i in range(M):
             if i == j:
                 continue
-            if questions_sim[i][j] > 0.8:
+            if questions_sim[i][j] > max_sim:
+                create_new_node = False
+                max_sim = questions_sim[i][j]
+                max_sim_i = i
+        if not create_new_node:
+            if G.has_node(N+max_sim_i):
+                question_node_map[N+start+j] = N+max_sim_i
+            elif N+max_sim_i in question_node_map:
+                question_node_map[N+start+j] = question_node_map[N+max_sim_i]
+            else:
+                G.add_node(N+start+j)
+        else:
+            G.add_node(N+start+j)
+
+
+def add_edges_between_questions(questions_sim, question_node_map, G, N, start, end):
+    M = len(questions_sim)
+    for j in range(end-start):
+        for i in range(M):
+            if questions_sim[i][j] > 0.9:
                 wt = questions_sim[i][j]
-                #print('%d, %d, %.4f' % (i, j, wt))
-                #print('%s %s %.4f' % (ques_dict[ids[i]+'_'+str(i)], ques_dict[ids[j]+'_'+str(j)], wt))
-                G.add_edge(N+i, N+j+start, weight=wt)
-                G.add_edge(N+j+start, N+i, weight=wt)
+                if G.has_node(N + i):
+                    src = N + i
+                else:
+                    src = question_node_map[N+i]
+                if G.has_node(N + j + start):
+                    tgt = N + j + start
+                elif (N + j + start) in question_node_map:
+                    tgt = question_node_map[N + j + start]
+                else:
+                    print('Not a node and does not map to current node! ')
+                    tgt = N + j + start
+                G.add_edge(src, tgt, weight=wt)
+                G.add_edge(tgt, src, weight=wt)
 
 
-def add_edges_between_context_question(ids, G, N):
+def add_edges_between_context_question(ids, question_node_map, G, N):
     prev_id = -1
     uniq_id_ix = -1
     # Adding edges between context and question nodes
@@ -42,8 +74,13 @@ def add_edges_between_context_question(ids, G, N):
         if ids[i] != prev_id:
             uniq_id_ix += 1
             prev_id = ids[i]
-        G.add_edge(uniq_id_ix, N + i, weight=0.5)
-        G.add_edge(N + i, uniq_id_ix, weight=0.5)
+        src = uniq_id_ix
+        if G.has_node(N+i):
+            tgt = N+i
+        else:
+            tgt = question_node_map[N+i]
+        G.add_edge(src, tgt, weight=1.0)
+        #G.add_edge(tgt, src, weight=0.5)
 
 
 def main(args):
@@ -63,66 +100,51 @@ def main(args):
     N = len(contexts_sim)
     print('Adding context nodes')
     G.add_nodes_from(range(N))
-    M = len(ids)
-    print('Adding question nodes')
-    G.add_nodes_from(range(N, N+M))
+
+    question_node_map = {}
+
     print('Adding edges between contexts')
     add_edges_between_contexts(contexts_sim, G, N)
-    contexts_sim = None    
-
-    print('Loading question sim part1')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part1).toarray()
+    questions_sim_parts = []
+    print('Loading question sim')
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part1).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part2).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part3).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part4).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part5).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part6).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part7).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part8).toarray())
+    questions_sim_parts.append(scipy.sparse.load_npz(args.questions_sim_part9).toarray())
+    print('Adding question nodes')
+    for part in range(9):
+        start = part*10000
+        if part == 8:
+            end = len(ids)
+        else:
+            end = (part+1)*10000
+        add_unique_question_nodes(questions_sim_parts[part], question_node_map, G, N, start=start, end=end)
     print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=0, end=10000)
-
-    print('Loading question sim part2')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part2).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=10000, end=20000)
-
-    print('Loading question sim part3')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part3).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=20000, end=30000)
-
-    print('Loading question sim part4')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part4).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=30000, end=40000)
-
-    print('Loading question sim part5')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part5).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=40000, end=50000)
-
-    print('Loading question sim part6')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part6).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=50000, end=60000)
-
-    print('Loading question sim part7')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part7).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=60000, end=70000)
-
-    print('Loading question sim part8')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part8).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=70000, end=80000)
-
-    print('Loading question sim part9')
-    questions_sim = scipy.sparse.load_npz(args.questions_sim_part9).toarray()
-    print('Adding edges between questions')
-    add_edges_between_questions(questions_sim, ques_dict, ids, G, N, M, start=80000, end=len(ids))
+    for part in range(9):
+        start = part * 10000
+        if part == 8:
+            end = len(ids)
+        else:
+            end = (part + 1) * 10000
+        add_edges_between_questions(questions_sim_parts[part], question_node_map, G, N, start=start, end=end)
 
     print('Adding edges between contexts and questions')
-    add_edges_between_context_question(ids, G, N)
+    add_edges_between_context_question(ids, question_node_map, G, N)
 
     print('Running pagerank algorithm')
     pagerank = nx.pagerank(G)
     ques_wt_dict = {}
     for i in range(len(ids)):
-        ques_wt_dict[ids[i]+'_'+str(i)] = pagerank[i]
+        if G.has_node(N+i):
+            ques_wt_dict[ids[i]+'_'+str(i)] = pagerank[N+i]
+        else:
+            ques_wt_dict[ids[i]+'_'+str(i)] = pagerank[question_node_map[N+i]]
+
     sorted_x = sorted(ques_wt_dict.items(), key=operator.itemgetter(1))
 
     print('Writing to outfile')
@@ -148,7 +170,7 @@ if __name__ == "__main__":
     argparser.add_argument("--questions_sim_part7", type = str)
     argparser.add_argument("--questions_sim_part8", type = str)
     argparser.add_argument("--questions_sim_part9", type = str)
-    argparser.add_argument("--outfile", type = str)
+    argparser.add_argument("--outfile", type=str)
     args = argparser.parse_args()
     print(args)
     print("")
