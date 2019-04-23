@@ -21,7 +21,7 @@ def main(args):
     specific_ques = []
     generic_ques_ids = []
     generic_ques = []
-    threshold = 0.000020
+    threshold = 0.00001
     with open(args.human_annotations) as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:

@@ -14,7 +14,7 @@ def add_edges_between_contexts(contexts_sim, G, N):
         for j in range(N):
             if i == j:
                 continue
-            if contexts_sim[i][j] > 0.9:
+            if contexts_sim[i][j] > 0.8:
                 wt = contexts_sim[i][j]
                 #print('%d, %d, %.4f' % (i, j, wt))
                 G.add_edge(i, j, weight=wt)
@@ -22,10 +22,11 @@ def add_edges_between_contexts(contexts_sim, G, N):
 
 
 def add_unique_question_nodes(questions_sim, question_node_map, G, N, start, end):
+    # M = len(questions_sim[0])
     M = len(questions_sim)
     for j in range(end - start):
         create_new_node = True
-        max_sim = 0.95
+        max_sim = 0.98
         max_sim_i = -1
         for i in range(M):
             if i == j:
@@ -46,10 +47,11 @@ def add_unique_question_nodes(questions_sim, question_node_map, G, N, start, end
 
 
 def add_edges_between_questions(questions_sim, question_node_map, G, N, start, end):
+    # M = len(questions_sim[0])
     M = len(questions_sim)
     for j in range(end-start):
         for i in range(M):
-            if questions_sim[i][j] > 0.9:
+            if questions_sim[i][j] > 0.5:
                 wt = questions_sim[i][j]
                 if G.has_node(N + i):
                     src = N + i
@@ -77,10 +79,12 @@ def add_edges_between_context_question(ids, question_node_map, G, N):
         src = uniq_id_ix
         if G.has_node(N+i):
             tgt = N+i
-        else:
+            G.add_edge(src, tgt, weight=2)
+            G.add_edge(tgt, src, weight=2)
+        elif N+i in question_node_map:
             tgt = question_node_map[N+i]
-        G.add_edge(src, tgt, weight=1.0)
-        #G.add_edge(tgt, src, weight=0.5)
+            G.add_edge(src, tgt, weight=2)
+            G.add_edge(tgt, src, weight=2)
 
 
 def main(args):
@@ -142,7 +146,7 @@ def main(args):
     for i in range(len(ids)):
         if G.has_node(N+i):
             ques_wt_dict[ids[i]+'_'+str(i)] = pagerank[N+i]
-        else:
+        elif N+i in question_node_map:
             ques_wt_dict[ids[i]+'_'+str(i)] = pagerank[question_node_map[N+i]]
 
     sorted_x = sorted(ques_wt_dict.items(), key=operator.itemgetter(1))
