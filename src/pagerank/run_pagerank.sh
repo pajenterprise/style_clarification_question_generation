@@ -3,7 +3,7 @@
 
 SITENAME=Home_and_Kitchen
 STYLE_CQ_DATA_DIR=D:\\style_clarification_question_generation\\$SITENAME
-SCRIPT_DIR=C:\\Users\\sudhra\\style_clarification_question_generation\\src
+SCRIPT_DIR=C:\\Users\\sudhra\\style_clarification_question_generation\\src\\pagerank
 
 python $SCRIPT_DIR\\pagerank.py  --ids $STYLE_CQ_DATA_DIR\\train_asin.txt \
                                 --questions $STYLE_CQ_DATA_DIR\\train_ques.txt \
