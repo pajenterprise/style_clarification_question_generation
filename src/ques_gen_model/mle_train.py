@@ -5,7 +5,7 @@ import torch
 from torch.autograd import Variable
 
 
-def train(input_batches, input_lens, target_batches, target_lens,
+def mle_train(input_batches, input_lens, target_batches, target_lens,
           encoder, decoder, encoder_optimizer, decoder_optimizer,
           SOS_idx, max_target_length, batch_size, teacher_forcing_ratio):
     

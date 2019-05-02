@@ -15,11 +15,11 @@ from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence#, maske
 
 import numpy as np
 
-from seq2seq.read_data import *
-from seq2seq.prepare_data import *
-from seq2seq.masked_cross_entropy import *
-from seq2seq.seq2seq import *
-from seq2seq.constants import *
+from ques_gen_model.read_data import *
+from ques_gen_model.prepare_data import *
+from ques_gen_model.masked_cross_entropy import *
+from ques_gen_model.mle import *
+from ques_gen_model.constants import *
 
 
 def main(args):
@@ -49,28 +49,24 @@ def main(args):
 
     q_test_data = ids_seqs, post_seqs, post_lens, ques_seqs, ques_lens
 
-    run_seq2seq(q_train_data, q_test_data, word2index, word_embeddings,
+    run_mle(q_train_data, q_test_data, word2index, word_embeddings,
                     args.q_encoder_params, args.q_decoder_params,
                     args.max_ques_len, args.n_epochs, args.batch_size, n_layers=2)
 
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser(sys.argv[0])
-    argparser.add_argument("--train_ids", type=str)
     argparser.add_argument("--train_context", type = str)
     argparser.add_argument("--train_question", type = str)
-    argparser.add_argument("--train_labels", type=str)
-    argparser.add_argument("--tune_ids", type=str)
+    argparser.add_argument("--train_ids", type=str)
     argparser.add_argument("--tune_context", type = str)
     argparser.add_argument("--tune_question", type = str)
-    argparser.add_argument("--tune_labels", type=str)
-    argparser.add_argument("--test_ids", type=str)
+    argparser.add_argument("--tune_ids", type=str)
     argparser.add_argument("--test_context", type = str)
     argparser.add_argument("--test_question", type = str)
-    argparser.add_argument("--test_labels", type=str)
-    argparser.add_argument("--context_params", type=str)
-    argparser.add_argument("--question_params", type=str)
-    argparser.add_argument("--relevance_classifier_params", type = str)
+    argparser.add_argument("--test_ids", type=str)
+    argparser.add_argument("--q_encoder_params", type = str)
+    argparser.add_argument("--q_decoder_params", type = str)
     argparser.add_argument("--vocab", type = str)
     argparser.add_argument("--word_embeddings", type = str)
     argparser.add_argument("--max_post_len", type = int, default=300)

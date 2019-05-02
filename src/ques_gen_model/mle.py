@@ -4,13 +4,13 @@ from .constants import *
 from .encoderRNN import *
 from .evaluate import *
 from .helper import *
-from .train import *
+from .mle_train import *
 import torch
 import torch.optim as optim
 from .prepare_data import *
 
 
-def run_seq2seq(train_data, test_data, word2index, word_embeddings,
+def run_mle(train_data, test_data, word2index, word_embeddings,
                 encoder_params_file, decoder_params_file, max_target_length,
                 n_epochs, batch_size, n_layers):
     # Initialize q models
@@ -52,7 +52,7 @@ def run_seq2seq(train_data, test_data, word2index, word_embeddings,
 
             start_time = time.time()
             # Run the train function
-            loss = train(
+            loss = mle_train(
                 input_seqs_batch, input_lens_batch,
                 output_seqs_batch, output_lens_batch,
                 encoder, decoder,

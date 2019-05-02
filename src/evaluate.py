@@ -3,11 +3,11 @@ import pickle as p
 import sys
 import torch
 
-from seq2seq.encoderRNN import *
-from seq2seq.attnDecoderRNN import *
-from seq2seq.beam_decoder import *
-from seq2seq.decoder import *
-from seq2seq.constants import *
+from ques_gen_model.encoderRNN import *
+from ques_gen_model.attnDecoderRNN import *
+from ques_gen_model.beam_decoder import *
+from ques_gen_model.decoder import *
+from ques_gen_model.constants import *
 
 
 def main(args):

@@ -13,6 +13,13 @@ def as_minutes(s):
     return '%dm %ds' % (m, s)
 
 
+def get_masks(lens, max_len):
+    masks = []
+    for i in range(len(lens)):
+        masks.append([1]*lens[i]+[0]*(max_len-lens[i]))
+    return np.array(masks)
+
+
 def time_since(since, percent):
     now = time.time()
     s = now - since
